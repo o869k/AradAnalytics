@@ -1,0 +1,50 @@
+%YAML 1.1
+---
+actions:
+- utter_name
+- utter_thanks
+- utter_greet
+- utter_goodbye
+- action_meter
+- utter_meter_count
+config:
+  store_entities_as_slots: true
+entities:
+- name
+- meter
+forms: []
+intents:
+- greet:
+    use_entities: true
+- goodbye:
+    use_entities: true
+- thanks:
+    use_entities: true
+- deny:
+    use_entities: true
+- meter_usage:
+    use_entities: true
+- name:
+    use_entities: true
+- meter_count:
+    use_entities: true
+slots:
+  meter:
+    auto_fill: true
+    initial_value: null
+    type: rasa_core.slots.TextSlot
+  name:
+    auto_fill: true
+    initial_value: null
+    type: rasa_core.slots.TextSlot
+templates:
+  utter_goodbye:
+  - text: Talk to you later!
+  utter_greet:
+  - text: Nice to you meet you {name}. How can I help?
+  utter_meter_count:
+  - text: What is your meter count number?
+  utter_name:
+  - text: Hey there! Tell me your name.
+  utter_thanks:
+  - text: My pleasure.
