@@ -1,0 +1,26 @@
+welcome: |
+    <speak>
+        Welcome to Arad Analytics.
+        <audio src='soundbank://soundlibrary/nature/amzn_sfx_stream_03'/>
+        Let's get started. What is your meter number?
+    </speak>
+
+help: You can ask Arad about your meter usage, compare it to previous months and years, understand reasons for high consumptions and get a forecast for your current month usage. I can lead you through providing a meter and date to get the information. What is your meter number?
+
+help_known_meter: You can ask Arad about your meter usage, compare it to previous months and years, understand reasons for high consumptions and get a forecast for your current month usage. I can lead you through providing a meter and date to get the information. What do you like to know about meter number {{ meter_number }}?
+
+bye: Goodbye
+
+fallback: Hmmm...I dont know that...
+
+known_meter: What do you like to know about meter number {{ meter_number }}?
+
+known_meter_reprompt: You can ask me information about your meter?
+
+unknown_meter: I'm not sure what your meter is, please try again
+
+unknown_meter_reprompt: I'm not sure what your meter is. You can tell me your meter by saying for example, my meter is 5555
+
+unknown_date: I'm not sure what the date you mentioned, please try again
+
+unknown_date_reprompt: I'm not sure what your meter is. You can tell me your meter by saying for example, my meter is 5555
