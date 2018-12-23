@@ -15,12 +15,10 @@ fallback: Hmmm...I dont know that...
 
 known_meter: What do you like to know about meter number {{ meter_number }}?
 
-known_meter_reprompt: You can ask me information about your meter?
+known_meter_reprompt: I didn't get that. What do you like to know about meter number {{ meter_number }}?
 
 unknown_meter: I'm not sure what your meter is, please try again
 
 unknown_meter_reprompt: I'm not sure what your meter is. You can tell me your meter by saying for example, my meter is 5555
 
-unknown_date: I'm not sure what the date you mentioned, please try again
-
-unknown_date_reprompt: I'm not sure what your meter is. You can tell me your meter by saying for example, my meter is 5555
+thanks: no problem

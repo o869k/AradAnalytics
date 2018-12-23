@@ -1,16 +1,11 @@
-from flask import Flask, json, render_template
-from flask_ask import Ask, request, session, question, statement
+from flask import Flask, render_template
+from flask_ask import Ask, session, question, statement
 import logging
 import pandas as pd
-import numpy as np
 from turbodbc import connect
 import datetime
 import dateutil.relativedelta
-from six.moves.urllib.request import urlopen
-from six.moves.urllib.parse import urlencode
 import os
-import math
-import re
 
 app = Flask(__name__)
 ask = Ask(app, '/')
@@ -36,14 +31,14 @@ start_date_prev_month = start_date_prev_month.strftime("%Y-%m-%d")
 
 #Entities
 SESSION_METER = "meter_number"
-SESSION_DATE = "date"
 
 @ask.launch
 def launch():
     welcome_sentence = render_template('welcome')
+    session.attributes[SESSION_METER] = '?'
     return question(welcome_sentence)
 
-@ask.intent('MyMeterIs', mapping={'meter_number': 'meter_number'})
+@ask.intent('MyMeterIs', default={'meter_number': None})
 def my_meter_is(meter_number):
     #just checking if that's a real number
     if meter_number is not None:
@@ -56,18 +51,20 @@ def my_meter_is(meter_number):
         question_text = render_template('known_meter', meter_number=meter_number)
         reprompt_text = render_template('known_meter_reprompt')
     else:
+        session.attributes[SESSION_METER] = meter_number
         question_text = render_template('unknown_meter')
         reprompt_text = render_template('unknown_meter_reprompt')
     return question(question_text).reprompt(reprompt_text)
 
 @ask.intent('MeterStatusPrevMonth')
-def meter_status_prev_month():
+def meter_status_prev_month(meter_number):
     #meter_number = '5478'
-    meter_number = session.attributes.get(SESSION_METER)
-    if meter_number is None:
+    if (meter_number is None) or (meter_number=='?'):
+        meter_number = session.attributes.get(SESSION_METER)
+    if (meter_number is None) or (meter_number=='?'):
         question_text = render_template('unknown_meter')
         reprompt_text = render_template('unknown_meter_reprompt')
-        question(question_text).reprompt(reprompt_text)
+        return question(question_text).reprompt(reprompt_text)
     if meter_number is not None:
         connection = connect(dsn='AradRoundRock',uid='OriKronfeld',pwd='Basket76&Galil')
         sql = "select sum(Cons) from dbo.MetersConsDaily where MeterCount='"+str(meter_number)+"' and ConsValid='1' and ConsInterval<'"+str(end_date)+"' and ConsInterval>='"+str(start_date)+"'"
@@ -83,48 +80,12 @@ def meter_status_prev_month():
             speech_text = "Round Rock Meter number: "+meter_number+" is not availble"
         else:
             speech_text = "Round Rock Meter number: "+str(meter_number)+" consumption from "+start_date+" to "+end_date+" is "+MonthlyReadingPrevMonth.to_string(index=False)+" cubes, which is a "+DiffRatioPrevMonth.to_string(index=False)+"% difference from the previous month, and a "+DiffRatioPrevYear.to_string(index=False)+"% difference from the previous year"
-        return question(speech_text).reprompt(speech_text)
-
-@ask.intent('MeterUsageAtDate',mapping={'date':'date'})
-def meter_usage_at_date(date):
-    #meter_number = '5478'
-    #date = '2016-11-11'
-    meter_number = session.attributes.get(SESSION_METER)
-    date = session.attributes.get(SESSION_DATE)
-    if meter_number is None:
-        question_text = render_template('unknown_meter')
-        reprompt_text = render_template('unknown_meter_reprompt')
-        question(question_text).reprompt(reprompt_text)
-    if date is None:
-        question_text = render_template('unknown_date')
-        reprompt_text = render_template('unknown_date_reprompt')
-        question(question_text).reprompt(reprompt_text)
-    if (meter_number is not None) and (date is not None):
-        connection = connect(dsn='AradRoundRock',uid='OriKronfeld',pwd='Basket76&Galil')
-        sql = "select sum(Cons) from dbo.MetersConsDaily where MeterCount='"+str(meter_number)+"' and ConsValid='1' and ConsInterval='"+str(date)+"'"
-        ReadingAtDate = pd.read_sql(sql,connection)
-        connection.close()
-        if (ReadingAtDate.dropna().empty):
-            speech_text = "Round Rock Meter number: "+meter_number+" is not availble"
-        else:
-            speech_text = "Round Rock Meter number: "+str(meter_number)+" consumption on "+date+" is "+ReadingAtDate.to_string(index=False)+" cubes"
-        return question(speech_text).reprompt(speech_text)
-
-@app.template_filter()
-def humanize_date(dt):
-    # http://stackoverflow.com/a/20007730/1163855
-    ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(n/10%10!=1)*(n%10<4)*n%10::4])
-    month_and_day_of_week = dt.strftime('%A %B')
-    day_of_month = ordinal(dt.day)
-    year = dt.year if dt.year != datetime.datetime.now().year else ""
-    formatted_date = "{} {} {}".format(month_and_day_of_week, day_of_month, year)
-    formatted_date = re.sub('\s+', ' ', formatted_date)
-    return formatted_date
+        return question(speech_text)
 
 @ask.intent('AMAZON.HelpIntent')
 def help():
     meter_number = session.attributes.get(SESSION_METER)
-    if meter_number is None:
+    if (meter_number is None) or (meter_number=='?'):
         help_text = render_template('help')
         return question(help_text)
     if meter_number is not None:
@@ -141,10 +102,15 @@ def cancel():
     bye_text = render_template('bye')
     return statement(bye_text)
 
+@ask.intent('ThanksIntent')
+def thanks():
+    thanks_text = render_template('thanks')
+    return question(thanks_text)
+
 @ask.intent('AMAZON.FallbackIntent')
 def fallback():
     fallback_text = render_template('fallback')
-    return question(fallback_text).reprompt(fallback_text)
+    return question(fallback_text)
 
 @ask.session_ended
 def session_ended():
