@@ -1,0 +1,114 @@
+{
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "arad",
+            "intents": [
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": [
+                        "cancel",
+                        "stop",
+                        "Goodbye",
+                        "See you later",
+                        "Bye bot",
+                        "Goodbye friend",
+                        "bye",
+                        "bye for now",
+                        "catch you later",
+                        "gotta go",
+                        "See you",
+                        "goodnight",
+                        "have a nice day",
+                        "i'm off",
+                        "see you later alligator",
+                        "we'll speak soon"
+                    ]
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": [
+                        "help"
+                    ]
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": [
+                        "stop",
+                        "Goodbye",
+                        "See you later",
+                        "Bye bot",
+                        "Goodbye friend",
+                        "bye",
+                        "bye for now",
+                        "catch you later",
+                        "gotta go",
+                        "See you",
+                        "goodnight",
+                        "have a nice day",
+                        "i'm off",
+                        "see you later alligator",
+                        "we'll speak soon"
+                    ]
+                },
+                {
+                    "name": "AMAZON.FallbackIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.NavigateHomeIntent",
+                    "samples": []
+                },
+                {
+                    "name": "MyMeterIs",
+                    "slots": [
+                        {
+                            "name": "meter_number",
+                            "type": "AMAZON.NUMBER"
+                        }
+                    ],
+                    "samples": [
+                        "Meter number is {meter_number}"
+                    ]
+                },
+                {
+                    "name": "MeterStatusPrevMonth",
+                    "slots": [
+                        {
+                            "name": "meter_number",
+                            "type": "AMAZON.NUMBER"
+                        }
+                    ],
+                    "samples": [
+                        "What was meter {meter_number} previous month usage",
+                        "What was my previous month usage"
+                    ]
+                },
+                {
+                    "name": "AMAZON.NoIntent",
+                    "samples": [
+                        "no thanks",
+                        "no"
+                    ]
+                },
+                {
+                    "name": "AMAZON.YesIntent",
+                    "samples": [
+                        "sure",
+                        "yes please",
+                        "yes"
+                    ]
+                },
+                {
+                    "name": "ThanksIntent",
+                    "slots": [],
+                    "samples": [
+                        "thanks",
+                        "Thank you",
+                        "Thank you very much"
+                    ]
+                }
+            ],
+            "types": []
+        }
+    }
+}
