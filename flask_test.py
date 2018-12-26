@@ -2,7 +2,8 @@ from flask import Flask, render_template
 from flask_ask import Ask, session, question, statement
 import logging
 import pandas as pd
-from turbodbc import connect
+from turbodbc import connect #unsuitable for lambda?
+import pyodbc
 import datetime
 import dateutil.relativedelta
 import os
@@ -13,6 +14,7 @@ logging.getLogger("flask_ask").setLevel(logging.DEBUG)
 
 #Date Inputs
 today = datetime.date.today()
+yesterday = today - datetime.timedelta(days=1)
 today = today.replace(year=2016)
 today_prev_year = today.replace(year=2015)
 
@@ -31,16 +33,19 @@ start_date_prev_month = start_date_prev_month.strftime("%Y-%m-%d")
 
 #Entities
 SESSION_METER = "meter_number"
-
+SESSION_USAGE_DATE = "usage_date"
+           
 @ask.launch
 def launch():
     welcome_sentence = render_template('welcome')
     session.attributes[SESSION_METER] = '?'
+    session.attributes[SESSION_USAGE_DATE] = yesterday.strftime("%Y-%m-%d") #by default mean yersteday
     return question(welcome_sentence)
 
 @ask.intent('MyMeterIs', default={'meter_number': None})
 def my_meter_is(meter_number):
     #just checking if that's a real number
+    #Meter number is {meter_number}
     if meter_number is not None:
         try:
             val = int(meter_number)
@@ -59,6 +64,8 @@ def my_meter_is(meter_number):
 @ask.intent('MeterStatusPrevMonth')
 def meter_status_prev_month(meter_number):
     #meter_number = '5478'
+    #What was meter {meter_number} previous month usage
+    #What was my previous month usage
     if (meter_number is None) or (meter_number=='?'):
         meter_number = session.attributes.get(SESSION_METER)
     if (meter_number is None) or (meter_number=='?'):
@@ -66,6 +73,14 @@ def meter_status_prev_month(meter_number):
         reprompt_text = render_template('unknown_meter_reprompt')
         return question(question_text).reprompt(reprompt_text)
     if meter_number is not None:
+        #Connect to data base
+        #PyODBC
+        #connection = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
+        #                      "Server=192.168.33.85;"
+        #                      "Database=RoundRockTX;"
+        #                      "UID=OriKronfeld;"
+        #                      "PWD=Basket76&Galil;")
+        #TurboODBC
         connection = connect(dsn='AradRoundRock',uid='OriKronfeld',pwd='Basket76&Galil')
         sql = "select sum(Cons) from dbo.MetersConsDaily where MeterCount='"+str(meter_number)+"' and ConsValid='1' and ConsInterval<'"+str(end_date)+"' and ConsInterval>='"+str(start_date)+"'"
         MonthlyReadingPrevMonth = pd.read_sql(sql,connection)
@@ -79,9 +94,70 @@ def meter_status_prev_month(meter_number):
         if (MonthlyReadingPrevMonth.dropna().empty):
             speech_text = "Round Rock Meter number: "+meter_number+" is not availble"
         else:
-            speech_text = "Round Rock Meter number: "+str(meter_number)+" consumption from "+start_date+" to "+end_date+" is "+MonthlyReadingPrevMonth.to_string(index=False)+" cubes, which is a "+DiffRatioPrevMonth.to_string(index=False)+"% difference from the previous month, and a "+DiffRatioPrevYear.to_string(index=False)+"% difference from the previous year"
+            speech_text = "Round Rock Meter number: "+meter_number+" consumption from "+start_date+" to "+end_date+" is "+MonthlyReadingPrevMonth.to_string(index=False)+" cubes, which is a "+DiffRatioPrevMonth.to_string(index=False)+"% difference from the previous month, and a "+DiffRatioPrevYear.to_string(index=False)+"% difference from the previous year"
         return question(speech_text)
 
+@ask.intent('MeterStatusSpecificDate')
+def meter_status_specific_date(meter_number,usage_date):
+    #meter_number = '5478'
+    #usage_date = '2016-01-01'
+    #What was my usage on {usage_date}
+    #What was meter {meter_number} usage on {usage_date}
+    if (meter_number is None) or (meter_number=='?'):
+        meter_number = session.attributes.get(SESSION_METER)
+    if (usage_date is None) or (usage_date=='?'):
+        usage_date = session.attributes.get(SESSION_USAGE_DATE)
+    if (meter_number is None) or (meter_number=='?'):
+        question_text = render_template('unknown_meter')
+        reprompt_text = render_template('unknown_meter_reprompt')
+        return question(question_text).reprompt(reprompt_text)
+    #Somtime we can get a month-year and that's all - need to dechiper it as a monthly region
+    #usage_date = '2018-11'
+    if len(usage_date)==7:
+        start_date_spcf_month = usage_date+'-01'
+        end_date_spcf_month = datetime.datetime.strptime(usage_date,"%Y-%m") + dateutil.relativedelta.relativedelta(months=1)
+        end_date_spcf_month = end_date_spcf_month.strftime("%Y-%m-%d")
+        if meter_number is not None:
+            #Connect to data base
+            #PyODBC
+            #connection = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
+            #                      "Server=192.168.33.85;"
+            #                      "Database=RoundRockTX;"
+            #                      "UID=OriKronfeld;"
+            #                      "PWD=Basket76&Galil;")
+            #TurboODBC
+            connection = connect(dsn='AradRoundRock',uid='OriKronfeld',pwd='Basket76&Galil')
+            sql = "select sum(Cons) from dbo.MetersConsDaily where MeterCount='"+str(meter_number)+"' and ConsValid='1' and ConsInterval<'"+str(end_date_spcf_month)+"' and ConsInterval>='"+str(start_date_spcf_month)+"'"
+            MonthlyReadingInputDate = pd.read_sql(sql,connection)
+            connection.close()
+            if (MonthlyReadingInputDate.dropna().empty):
+                speech_text = "Round Rock Meter number: "+meter_number+" usage from "+start_date_spcf_month+" to "+end_date_spcf_month+" is not availble"
+            else:
+                MonthlyReadingInputDate = round(MonthlyReadingInputDate.Cons,2)
+                speech_text = "Round Rock Meter number: "+meter_number+" usage from "+start_date_spcf_month+" to "+end_date_spcf_month+" is "+MonthlyReadingInputDate.to_string(index=False)+" cubes"
+            return question(speech_text)
+    #For a specific date
+    if len(usage_date)==10:
+        if meter_number is not None:
+            #Connect to data base
+            #PyODBC
+            #connection = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
+            #                      "Server=192.168.33.85;"
+            #                      "Database=RoundRockTX;"
+            #                      "UID=OriKronfeld;"
+            #                      "PWD=Basket76&Galil;")
+            #TurboODBC
+            connection = connect(dsn='AradRoundRock',uid='OriKronfeld',pwd='Basket76&Galil')
+            sql = "select Cons from dbo.MetersConsDaily where MeterCount='"+str(meter_number)+"' and ConsValid='1' and ConsInterval='"+str(usage_date)+"'"
+            DailyReadingInputDate = pd.read_sql(sql,connection)
+            connection.close()
+            if (DailyReadingInputDate.dropna().empty):
+                speech_text = "Round Rock Meter number: "+meter_number+" usage on "+usage_date+" is not availble"
+            else:
+                DailyReadingInputDate = round(DailyReadingInputDate.Cons,2)
+                speech_text = "Round Rock Meter number: "+meter_number+" usage on "+usage_date+" is "+DailyReadingInputDate.to_string(index=False)+" cubes"
+            return question(speech_text)
+    
 @ask.intent('AMAZON.HelpIntent')
 def help():
     meter_number = session.attributes.get(SESSION_METER)
