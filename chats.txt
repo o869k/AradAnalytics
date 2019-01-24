@@ -1,0 +1,20 @@
+open arad analytics
+launch arad analytics
+help
+cancel
+stop
+account is {account_number}
+The account number is {account_number}
+ID is {account_number}
+My ID is {account_number}
+Consumer ID is {account_number}
+What was my usage on {usage_date}
+What was my usage from {start_date} to {end_date}
+what was my usage on the previous month
+what was my usage on 206-01-01
+what was my usage on 2016-01-01
+what was my usage on 2016-01
+what was my usage from 2016-01-01 to 2017-01-01
+Was there any watering from {start_date} to {end_date}
+why is my water bill so high
+
