@@ -93,9 +93,13 @@ def OutputSpeechText(speech_text,dataset,text1,text2):
         if (len(dataset.index)>1):
             speech_text = speech_text+text2
         if (len(dataset[dataset.samples==1].index)>0):
-            speech_text = speech_text+",".join([str(date) for date in dataset.ConsInterval['min'][dataset.samples==1]])+" in the total amount of "+str(np.round(dataset.Cons[dataset.samples==1].sum()[0],2))+" gallons.\n"
+            text3 = "and ".join([str(date) for date in dataset.ConsInterval['min'][dataset.samples==1]])+"; in the total amount of "+str(np.round(dataset.Cons[dataset.samples==1].sum()[0],2))+" gallons.\n"
+            text3 = text3.replace('and',",",(text3.count('and')-1))
+            speech_text = speech_text+text3
         if (len(dataset[dataset.samples>1].index)>0):
-            speech_text = speech_text+",".join([str(date) for date in 'from '+dataset.ConsInterval['min'][dataset.samples>1].astype(str)+' to '+dataset.ConsInterval['max'][dataset.samples>1].astype(str)])+" in the total amount of "+str(np.round(dataset.Cons[dataset.samples>1].sum()[0],2))+" gallons.\n"
+            text4 = " and".join([str(date) for date in ' from '+dataset.ConsInterval['min'][dataset.samples>1].astype(str)+' to '+dataset.ConsInterval['max'][dataset.samples>1].astype(str)])+"; in the total amount of "+str(np.round(dataset.Cons[dataset.samples>1].sum()[0],2))+" gallons.\n"
+            text4 = text4.replace(' and ',", ",(text4.count(' and ')-1))
+            speech_text = speech_text+text4
     return speech_text
 
 def RemoveUnwantedAlerts(dataset,dataset_to_remove):
@@ -272,10 +276,20 @@ def run_anomalities_summary(meter,cycle,next_cycle):
             events_of_hourly_burst_summ = RemoveUnwantedAlerts2(events_of_daily_anomaly_summ,events_of_hourly_burst_summ) 
             
             #Arrenage output speech sentences
-            speech_text = OutputSpeechText(speech_text,events_of_int_leak_summ_hours,"There was leakage anomality on the following occasion: ","There were leakage anomalities on the following occasions: ")
-            speech_text = OutputSpeechText(speech_text,events_of_hourly_watering_summ,"There was watering pattern on the following occasion: ","There were watering patterns on the following occasions: ")
-            speech_text = OutputSpeechText(speech_text,events_of_hourly_burst_summ,"There was water burst on the following occasion: ","There were water bursts on the following occasions: ")
-            speech_text = OutputSpeechText(speech_text,events_of_hourly_anomaly_summ,"There was additional unknown anomality on the following occasion: ","There were additional unknown anomalities on the following occasions: ")
+            add = ''
+            speech_text = OutputSpeechText(speech_text,events_of_int_leak_summ_hours,"There was leakage anomality on the following occasion: ","There were "+add+"leakage anomalities on the following occasions: ")
+            if speech_text!='':
+                add = 'additional '
+            speech_text = OutputSpeechText(speech_text,events_of_hourly_watering_summ,"There was "+add+"watering pattern on the following occasion: ","There were "+add+"watering patterns on the following occasions: ")
+            if speech_text!='':
+                add = 'additional '
+            speech_text = OutputSpeechText(speech_text,events_of_hourly_burst_summ,"There was "+add+"water burst on the following occasion: ","There were "+add+"water bursts on the following occasions: ")
+            if speech_text!='':
+                add = 'additiona l'
+            speech_text = OutputSpeechText(speech_text,events_of_hourly_anomaly_summ,"There was "+add+"additional unknown anomality on the following occasion: ","There were "+add+"additional unknown anomalities on the following occasions: ")
+            if speech_text!='':
+                add = 'additional '
+            speech_text = speech_text.replace('00:00:00','')
 
         else:
             speech_text = speech_text+"Not enough data to perform analysis."
@@ -302,7 +316,7 @@ def my_meter_is(account_number):
         if account_number in meters_list['ConsumerID'].unique() or account_number in meters_list['ConsumerID_numeric'].unique():
             if account_number in meters_list['ConsumerID_numeric'].unique():
                 #The account input in numeric form
-                account_number = str(meters_list.ConsumerID[meters_list['ConsumerID_numeric']==account_number][0])
+                account_number = str(list(meters_list.ConsumerID[meters_list['ConsumerID_numeric']==account_number])[0])
             session.attributes[SESSION_ACCOUNT] = account_number
             question_text = render_template('known_account', account_number=str(int(account_number)))
             reprompt_text = render_template('known_account_reprompt')
@@ -425,9 +439,9 @@ def watering_specific_date(start_date,end_date):
                             "Database=AnalyticsResults;"
                             "UID=Analytics;"
                             "PWD=hweg%^90Fdd;")
-        sql = "select distinct WateringDate,WateringHour from WateringDetectionResults where MeterCount in ('"+"','".join(meters)+"') and WateringDate<'"+str(end_date)+"' and WateringDate>='"+str(start_date)+"'"
-        WateringEvents = pd.read_sql(sql,connection)
-        WateringEventsCount = len(WateringEvents)
+        sql = "select count(distinct concat(WateringDate,WateringHour)) from WateringDetectionResults where MeterCount in ('"+"','".join(meters)+"') and WateringDate<'"+str(end_date)+"' and WateringDate>='"+str(start_date)+"'"
+        WateringEventsCount = pd.read_sql(sql,connection)
+        #WateringEventsCount = len(WateringEvents)
         speech_text = "Account number: "+str(int(account_number))+" number of watering events from "+start_date+" to "+end_date+" is "+str(WateringEventsCount)
         reprompt_text = render_template('next_step')
         return question(speech_text).reprompt(reprompt_text)

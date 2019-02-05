@@ -2,23 +2,33 @@ welcome: |
     <speak>
         Welcome to Arad Analytics.
         <audio src='soundbank://soundlibrary/nature/amzn_sfx_stream_03'/>
-        Let's get started. What is your meter number?
+        Let's get started. What is your account number?
     </speak>
 
-help: You can ask Arad about your meter usage, compare it to previous months and years, understand reasons for high consumptions and get a forecast for your current month usage. I can lead you through providing a meter and date to get the information. What is your meter number?
+help: You can ask Arad about your meter usage, compare it to previous months and years, understand reasons for high consumptions and get a forecast for your current month usage. I can lead you through providing an account ID and date to get the information. What is your account number?
 
-help_known_meter: You can ask Arad about your meter usage, compare it to previous months and years, understand reasons for high consumptions and get a forecast for your current month usage. I can lead you through providing a meter and date to get the information. What do you like to know about meter number {{ meter_number }}?
+help_known_account: You can ask Arad about your meter usage, compare it to previous months and years, understand reasons for high consumptions and get a forecast for your current month usage. I can lead you through providing an account ID and date to get the information. What do you like to know about account number {{ account_number }}?
 
 bye: Goodbye
 
-fallback: Hmmm...I dont know that...
+fallback: Hmmm...I dont know that... What do you like to know about your account?
 
-known_meter: What do you like to know about meter number {{ meter_number }}?
+known_account: What do you like to know about account number {{ account_number }}?
 
-known_meter_reprompt: I didn't get that. What do you like to know about meter number {{ meter_number }}?
+known_account_reprompt: I didn't get that. What do you like to know about account number {{ account_number }}?
 
-unknown_meter: I'm not sure what your meter is, please try again
+non_valid_account: Account number {{ meter_number }} is not availble. Please select another account.
 
-unknown_meter_reprompt: I'm not sure what your meter is. You can tell me your meter by saying for example, my meter is 5555
+non_valid_account_reprompt: I didn't get that. Account number {{ meter_number }} is not availble. Please select another account.
 
-thanks: no problem
+unknown_account: I'm not sure what your account is, please try again
+
+unknown_account_reprompt: I'm not sure what your account is. You can tell me your account by saying for example, my account number is 5555
+
+unknown_date: I'm not sure what the date is, please try again
+
+unknown_date_reprompt: I'm not sure what the date is. Please give me a date in 7 or 10 figures. For example, 2016-01-01 for a day or 2016-01 for a whole month
+
+next_step: what would you like to do next
+
+cancel: ok.

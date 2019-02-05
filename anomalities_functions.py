@@ -21,7 +21,7 @@ daily_missing_ratio = 5 #ratio in percent of missing daily sampels
 hourly_missing_ratio = 10 #ratio in percent of missing hourly sampels
 daily_anomaly_std = 2 #num of std for avg daily usgae
 hourly_anomaly_std = 3 #num of std for avg hourly usgae
-force_high_consump_cycle = 0
+force_high_consump_cycle = 1
 
 #Fucntions
 def MetersConsEdit(tmp,time_type) :
@@ -56,9 +56,13 @@ def OutputSpeechText(speech_text,dataset,text1,text2):
         if (len(dataset.index)>1):
             speech_text = speech_text+text2
         if (len(dataset[dataset.samples==1].index)>0):
-            speech_text = speech_text+",".join([str(date) for date in dataset.ConsInterval['min'][dataset.samples==1]])+" in the total amount of "+str(np.round(dataset.Cons[dataset.samples==1].sum()[0],2))+" gallons.\n"
+            text3 = "and ".join([str(date) for date in dataset.ConsInterval['min'][dataset.samples==1]])+"; in the total amount of "+str(np.round(dataset.Cons[dataset.samples==1].sum()[0],2))+" gallons.\n"
+            text3 = text3.replace('and',",",(text3.count('and')-1))
+            speech_text = speech_text+text3
         if (len(dataset[dataset.samples>1].index)>0):
-            speech_text = speech_text+",".join([str(date) for date in 'from '+dataset.ConsInterval['min'][dataset.samples>1].astype(str)+' to '+dataset.ConsInterval['max'][dataset.samples>1].astype(str)])+" in the total amount of "+str(np.round(dataset.Cons[dataset.samples>1].sum()[0],2))+" gallons.\n"
+            text4 = " and".join([str(date) for date in ' from '+dataset.ConsInterval['min'][dataset.samples>1].astype(str)+' to '+dataset.ConsInterval['max'][dataset.samples>1].astype(str)])+"; in the total amount of "+str(np.round(dataset.Cons[dataset.samples>1].sum()[0],2))+" gallons.\n"
+            text4 = text4.replace(' and ',", ",(text4.count(' and ')-1))
+            speech_text = speech_text+text4
     return speech_text
 
 def RemoveUnwantedAlerts(dataset,dataset_to_remove):
@@ -235,11 +239,21 @@ def run_anomalities_summary(meter,cycle,next_cycle):
             events_of_hourly_burst_summ = RemoveUnwantedAlerts2(events_of_daily_anomaly_summ,events_of_hourly_burst_summ) 
              
             #Arrenage output speech sentences
-            speech_text = OutputSpeechText(speech_text,events_of_int_leak_summ_hours,"There was leakage anomality on the following occasion: ","There were leakage anomalities on the following occasions: ")
-            speech_text = OutputSpeechText(speech_text,events_of_hourly_watering_summ,"There was watering pattern on the following occasion: ","There were watering patterns on the following occasions: ")
-            speech_text = OutputSpeechText(speech_text,events_of_hourly_burst_summ,"There was water burst on the following occasion: ","There were water bursts on the following occasions: ")
-            speech_text = OutputSpeechText(speech_text,events_of_hourly_anomaly_summ,"There was additional unknown anomality on the following occasion: ","There were additional unknown anomalities on the following occasions: ")
-
+            add = ''
+            speech_text = OutputSpeechText(speech_text,events_of_int_leak_summ_hours,"There was leakage anomality on the following occasion: \n","There were "+add+"leakage anomalities on the following occasions: \n")
+            if speech_text!='':
+                add = 'additional '
+            speech_text = OutputSpeechText(speech_text,events_of_hourly_watering_summ,"There was "+add+"watering pattern on the following occasion: \n","There were "+add+"watering patterns on the following occasions: \n")
+            if speech_text!='':
+                add = 'additional '
+            speech_text = OutputSpeechText(speech_text,events_of_hourly_burst_summ,"There was "+add+"water burst on the following occasion: \n","There were "+add+"water bursts on the following occasions: \n")
+            if speech_text!='':
+                add = 'additiona l'
+            speech_text = OutputSpeechText(speech_text,events_of_hourly_anomaly_summ,"There was "+add+"additional unknown anomality on the following occasion: \n","There were "+add+"additional unknown anomalities on the following occasions: \n")
+            if speech_text!='':
+                add = 'additional '
+            speech_text = speech_text.replace('00:00:00','')
+            
         else:
             speech_text = speech_text+"Not enough data to perform analysis."
     else:
@@ -249,9 +263,10 @@ def run_anomalities_summary(meter,cycle,next_cycle):
  
 #Examples
 #Select meter & time frame
-meter = "5741"
+meter = "5478"
 cycle = "2018-12-01"
 next_cycle = "2019-01-01"
 
 #Run it
-run_anomalities_summary(meter,cycle,next_cycle)
+speech_text = run_anomalities_summary(meter,cycle,next_cycle)
+print(speech_text)
